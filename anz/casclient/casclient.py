@@ -9,7 +9,7 @@ from AccessControl import ClassSecurityInfo
 from Acquisition import aq_base
 from Globals import InitializeClass
 from OFS.Cache import Cacheable
-from zope.interface import implements
+from zope.interface import implements, alsoProvides
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 import transaction
 
@@ -35,6 +35,12 @@ try:
     PLONE4 = True
 except ImportError:
     PLONE4 = False
+
+try:
+    from plone.protect.interfaces import IIDisableCSRFProtection
+except ImportError:
+    from zope.interface import Interface as IIDisableCSRFProtection
+
 
 LOG = getLogger( 'anz.casclient' )
 
@@ -243,6 +249,7 @@ class AnzCASClient( BasePlugin, Cacheable ):
                 # installed will be callback several times by CAS, this will
                 # makes the session data object we get before stale, so here
                 # we get it again.
+                alsoProvides(request, IIDisableCSRFProtection)
                 session = sdm.getSessionData()
                 session.set( self.CAS_ASSERTION, assertion )
 
@@ -281,6 +288,7 @@ class AnzCASClient( BasePlugin, Cacheable ):
     security.declarePrivate( 'resetCredentials' )
     def resetCredentials( self, request, response ):
         ''' Clears credentials and redirects to CAS logout page. '''
+        alsoProvides(request, IIDisableCSRFProtection)
         session = request.SESSION
         session.clear()
 
